@@ -15,11 +15,6 @@ LDSCRIPTDIR:=$(SYSINC)
 SRC:=$(wildcard *.c)
 MCPU:=cortex-m3
 
-ifeq ($(cpu),1788)
-	TARGETCPU:=LPC177x_8x
-else
-	TARGETCPU:=LPC175x_6x
-endif
 
 SYSSRC:=$(wildcard $(SYSINC)/*.c)
 SYSCPUSRC:=$(wildcard $(SYSINC)/$(TARGETCPU)/*.c)
@@ -35,8 +30,12 @@ LDSCRIPT:=$(LDSCRIPTDIR)/$(TARGETCPU)/$(TARGETCPU).ld
 
 # U8G Source files
 U8GSRC:=$(wildcard $(U8GPATH)/*.c)
+# U8GSRC=$(subst /,/,$(U8GSRC))
 FREERTOSSRC:=$(wildcard $(FREERTOSPATH)/*.c)
+# FREERTOSSRC=$(subst /,/,$(FREERTOSSRC))
 FREERTOSPORTSRC:=$(wildcard $(FREERTOSPORTPATH)/*.c)
+# FREERTOSPORTSRC=$(subst /,/,$(FREERTOSPORTSRC))
+
 # Internal Variable Names
 ELFNAME:=$(TARGETNAME).elf
 BINNAME:=$(TARGETNAME).bin
@@ -47,12 +46,12 @@ OBJ:=$(SRC:.c=.o) $(SYSSRC:.c=.o) $(SYSCPUSRC:.c=.o) $(FREERTOSSRC:.c=.o) $(FREE
 OBJSMALL:=$(SRC:.c=.o) $(SYSSRC:.c=.o) $(STARTUP:.S=.o)
 
 # Replace standard build tools by avr tools
-CC:=$(GCCPATH)/bin/arm-none-eabi-gcc
-AR:=$(GCCPATH)/bin/arm-none-eabi-ar
-AS:=$(GCCPATH)/bin/arm-none-eabi-gcc
-OBJCOPY:=$(GCCPATH)/bin/arm-none-eabi-objcopy
-OBJDUMP:=$(GCCPATH)/bin/arm-none-eabi-objdump
-SIZE:=$(GCCPATH)/bin/arm-none-eabi-size
+CC:=arm-none-eabi-gcc
+AR:=arm-none-eabi-ar
+AS:=arm-none-eabi-gcc
+OBJCOPY:=arm-none-eabi-objcopy
+OBJDUMP:=arm-none-eabi-objdump
+SIZE:=arm-none-eabi-size
 
 # Common flags
 COMMON_FLAGS = -mthumb -mcpu=$(MCPU)
@@ -76,6 +75,8 @@ LDLIBS:=--specs=nano.specs -lc -lc -lnosys -L$(LDSCRIPTDIR) -T $(LDSCRIPT)
 	#With debug stdout -> openocd
 #LDLIBS:=--specs=rdimon.specs -lc -lrdimon -L$(LDSCRIPTDIR) -T $(LDSCRIPT)
 
+RM = del
+
 
 # Additional Suffixes
 .SUFFIXES: .elf .hex .dis .bin
@@ -83,14 +84,12 @@ LDLIBS:=--specs=nano.specs -lc -lc -lnosys -L$(LDSCRIPTDIR) -T $(LDSCRIPT)
 # Targets
 .PHONY: all
 all: $(DISNAME) $(HEXNAME) $(BINNAME)
-	@echo -e "Output: $(DISNAME) $(HEXNAME) $(BINNAME)\e[1;36m"
+	@echo -e "Output: $(DISNAME) $(HEXNAME) $(BINNAME)/e[1;36m"
 	@echo
 	@$(SIZE) --format=SysV -x $(ELFNAME)
 	@$(SIZE) $(ELFNAME)
 	@echo
-	@stat main.bin -c "%y %n Size: %s"
-	@echo -e "\e[0m"
-#	cp $(BINNAME) /cygdrive/c/Prog/Dev/openOCD/share/openocd/scripts/main.bin
+	@echo -e "/e[0m"
 
 test:
 	@echo -e "This is a test... $@ cpu is $(TARGETCPU)"
@@ -101,26 +100,25 @@ help:
 
 .PHONY: upload
 upload: $(DISNAME) $(HEXNAME) $(ELFNAME)
-#	$(FLASHTOOL) HEXFILE\($(HEXNAME),NOCHECKSUMS,FILL,PROTECTISP\) COM\(5,38400\) DEVICE\($(FLASHMAGICDEVICE),12.000,0\)
+#	$(FLASHTOOL) HEXFILE/($(HEXNAME),NOCHECKSUMS,FILL,PROTECTISP/) COM/(5,38400/) DEVICE/($(FLASHMAGICDEVICE),12.000,0/)
 #	$(SIZE) $(ELFNAME)
 
 .PHONY: clean
 clean:
-	@echo -e "\e[1;37mRemoving all files...\e[0m\e[1;37m"
-	@$(RM) $(OBJ) $(HEXNAME) $(BINNAME) $(ELFNAME) $(DISNAME) $(MAPNAME)
+	@echo -e "/e[1;37mRemoving all files.../e[0m/e[1;37m"
+	$(RM) $(subst /,\,$(OBJ)) $(HEXNAME) $(BINNAME) $(ELFNAME) $(DISNAME) $(MAPNAME)
 
 cleansmall:
-	@echo -e "\e[1;37mRemoving some files...\e[0m\e[1;37m"
-	@$(RM) $(OBJSMALL) $(HEXNAME) $(BINNAME) $(ELFNAME) $(DISNAME) $(MAPNAME)
+	@echo -e "/e[1;37mRemoving some files.../e[0m/e[1;37m"
+	$(RM) $(OBJSMALL) $(HEXNAME) $(BINNAME) $(ELFNAME) $(DISNAME) $(MAPNAME)
 
 # implicit rules
 %.o: %.c
-	@echo -e "\e[1;37mCC \e[0m$< > $@\e[1;33m"
+	@echo -e "/e[1;37mCC /e[0m$< > $@/e[1;33m"
 	$(CC) $(CFLAGS) -c -o $@ $< 2>&1
-# | sed -e 's/error/\\e[1;31merror\\e[0m/g' -e 's/warning/\\e[1;33mwarning\\e[0m/g'
 
 .S.o:
-	@echo -e "\e[1;37mASM \e[0m$< > $@\e[1;37m"
+	@echo -e "/e[1;37mASM /e[0m$< > $@/e[1;37m"
 	@$(PREPROCESS.S) $(COMMON_FLAGS) $(patsubst %.s,%.S,$<) > tmp.s
 	@$(COMPILE.s) -c -o $@ tmp.s
 	@$(RM) tmp.s
@@ -133,7 +131,7 @@ cleansmall:
 
 # explicit rules
 $(ELFNAME): $(OBJ)
-	@echo -e "\e[1;37mLINKING \e[0m*.o > $@\e[1;37m"
+	@echo -e "/e[1;37mLINKING /e[0m*.o > $@/e[1;37m"
 	$(LINK.o) $(LFLAGS) $(OBJ) $(LDLIBS) -o $@
 
 $(DISNAME): $(ELFNAME)

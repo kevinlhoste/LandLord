@@ -40,6 +40,8 @@ ignore/
 /JLinkSettings.ini
 /LandLord.uvgui.*
 /OriginalFirmware
-.vscode/*
 
 .*#
+.vscode/targets.log
+.vscode/dryrun.log
+.vscode/configurationCache.log
